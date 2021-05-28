@@ -6,8 +6,9 @@
   "permissions": [
     "storage",
     "webNavigation",
-	"activeTab",
-    "*://*/"
+	  "activeTab",
+    "*://*/",
+    "webRequest"
   ],
   "icons" : {
     "128": "images/app_icon_128.png"
@@ -22,7 +23,7 @@
     "scripts": [
       "background.js"
     ],
-    "persistent": false
+    "persistent": true
   },
   "options_ui": {
     "page": "options.html",

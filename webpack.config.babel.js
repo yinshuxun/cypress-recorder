@@ -16,6 +16,7 @@ const base = {
     options: './src/options/index.js'
   },
   resolve: {
+    extensions: ['.ts', '.js'],
     alias: {
       styles: path.resolve(__dirname, './src/styles/')
     }
@@ -30,6 +31,11 @@ const base = {
         test: /\.js$/,
         exclude: /node_modules/,
         loader: 'babel-loader'
+      },
+      {
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        loader: 'ts-loader'
       },
       {
         test: /\.vue$/,
