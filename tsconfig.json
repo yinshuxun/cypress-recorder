@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
     "module": "esnext",
-    "target": "es2017",
-    "lib": [
-      "es2020",
-      "dom"
-    ],
+    "target": "es5",
+    "lib": ["esnext", "dom"],
     "strict": true,
     "declaration": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "moduleResolution": "node"
   }
 }

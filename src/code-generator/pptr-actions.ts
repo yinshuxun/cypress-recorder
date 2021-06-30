@@ -1,4 +1,4 @@
-export default {
+export const PPTR_ACTIONS = {
   GOTO: "goto*",
   VIEWPORT: "viewport*",
   WAITFORSELECTOR: "waitForSelector*",

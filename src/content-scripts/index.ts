@@ -1,79 +1,41 @@
-import eventsToRecord from "../code-generator/dom-events-to-record";
+import { DOM_EVENTS } from "../code-generator/dom-events-to-record";
 import { defaultBindTags } from "../code-generator/elements-to-bind-to";
 // import { finder } from "../code-generator/alauda-finder";
 import finder from "@medv/finder";
-import pptrActions from "../code-generator/pptr-actions";
+import { PPTR_ACTIONS } from "../code-generator/pptr-actions";
+import { matchClassNames } from "../custom/template";
+import { CodeEvent, HTMLElementEvent, StringMap } from "../custom/types";
 
-import * as delegate from "delegate";
-
-// note: 需要尽量避免aui-input的匹配
-export const matchClassNames = [
-  "aui-search",
-  "aui-button",
-  "aui-select",
-  "aui-accordion",
-  "aui-breadcrumb",
-  "aui-nav",
-  "aui-form",
-  "aui-icon",
-  "aui-tab",
-  "aui-tooltip",
-  "aui-option",
-  "acl-disabled-container",
-  "acl-",
-  "rc-",
-];
-
-// need add pre command lines elements
-export const needAddPreCLElements = [
-  
-]
-
+export type ContextMessage = Partial<CodeEvent> & {
+  control?: string;
+  origin?: string;
+  href?: string;
+  coordinates?: StringMap<string | number | boolean>;
+  targetObject?: StringMap<any>;
+};
 
 class EventRecorder {
-  constructor() {
-    this.eventLog = [];
-    this.previousEvent = null;
-    this.previousRouter = null;
-  }
+  eventLog: ContextMessage[] = [];
+  previousEvent!: Event;
+  previousRouter!: string;
+  dataAttribute!: string;
 
   start() {
     chrome.storage.local.get(["options"], ({ options }) => {
-      const { dataAttribute } = options ? options.code : {};
+      const { dataAttribute }: any = options ? options.code : {};
       const startContext = this;
       if (dataAttribute) {
         this.dataAttribute = dataAttribute;
       }
 
-      // yintest 监听 pushstate
-      // const _historyWrap = function(type) {
-      //   const orig = window.history[type];
-      //   const e = new Event(type);
-      //   return function() {
-      //     const rv = orig.apply(this, arguments);
-      //     e.arguments = arguments;
-      //     window.dispatchEvent(e);
-      //     return rv;
-      //   };
-      // };
-      // window.history.pushState = _historyWrap("pushState");
-      // window.history.replaceState = _historyWrap("replaceState");
-
-      // window.addEventListener("pushState", function(e) {
-      //   console.log("change pushState", e);
-      // });
-      // window.addEventListener("replaceState", function(e) {
-      //   console.log("change replaceState", e);
-      // });
-
-      const events = Object.values(eventsToRecord);
+      const events = Object.values(DOM_EVENTS);
       if (!window.pptRecorderAddedControlListeners) {
         this.addAllListeners(defaultBindTags, events);
         window.pptRecorderAddedControlListeners = true;
       }
 
       if (
-        !window.document.pptRecorderAddedControlListeners &&
+        !(window.document as any).pptRecorderAddedControlListeners &&
         chrome.runtime &&
         chrome.runtime.onMessage
       ) {
@@ -81,7 +43,7 @@ class EventRecorder {
         const boundedGetViewPortSize = this.getViewPortSize.bind(this);
         chrome.runtime.onMessage.addListener(boundedGetCurrentUrl);
         chrome.runtime.onMessage.addListener(boundedGetViewPortSize);
-        window.document.pptRecorderAddedControlListeners = true;
+        (window.document as any).pptRecorderAddedControlListeners = true;
       }
 
       chrome.storage.local.get("firstRun", function(items) {
@@ -111,20 +73,20 @@ class EventRecorder {
       console.debug("Cypress Recorder in-page EventRecorder started");
 
       // 绑定angular event router end
-      if (window._cy_navigate) {
-        console.log("_cy_navigate", window._cy_navigate);
+      if (!!window._cy_navigate) {
+        // yintodo
       }
     });
   }
 
-  addAllListeners(elements, events) {
+  addAllListeners(elements: string[], events: string[]) {
     const boundedRecordEvent = this.recordEvent.bind(this);
     events.forEach((type) => {
-      window.addEventListener(type, boundedRecordEvent, true);
+      window.addEventListener<any>(type, boundedRecordEvent, true);
     });
   }
 
-  sendMessage(msg) {
+  sendMessage(msg: ContextMessage) {
     console.debug("sending message", msg);
     try {
       // poor man's way of detecting whether this script was injected by an actual extension, or is loaded for
@@ -139,7 +101,7 @@ class EventRecorder {
     }
   }
 
-  getCurrentUrl(msg) {
+  getCurrentUrl(msg: ContextMessage) {
     if (msg.control && msg.control === "get-current-url") {
       console.debug("sending current url:", window.location.href);
       this.sendMessage({
@@ -150,7 +112,7 @@ class EventRecorder {
     }
   }
 
-  getViewPortSize(msg) {
+  getViewPortSize(msg: ContextMessage) {
     if (msg.control && msg.control === "get-viewport-size") {
       console.debug("sending current viewport size");
       this.sendMessage({
@@ -160,40 +122,48 @@ class EventRecorder {
     }
   }
 
-  recordEvent(e) {
+  recordEvent(
+    e: HTMLElementEvent<HTMLInputElement & HTMLLinkElement> &
+      KeyboardEvent &
+      MouseEvent
+  ) {
     if (this.previousEvent && this.previousEvent.timeStamp === e.timeStamp)
       return;
     this.previousEvent = e;
-    // yintest 判断url是否发生了改变
+
+    // router 变化之后需要价格 router 变化的断言
     if (window.location.href !== this.previousRouter) {
       this.previousRouter = window.location.href;
 
       this.sendMessage({
-        action: pptrActions.NAVIGATE,
+        action: PPTR_ACTIONS.NAVIGATE,
         href: this.previousRouter,
       });
     }
 
-    const baseOptions = {
-      className: (name) => matchClassNames.some((item) => name.includes(item)),
-      tagName: (name) => matchClassNames.some((item) => name.includes(item)),
-      attr: (name, value) => name.includes("data-cy"),
-      idName: (name) => !name.includes("cdk-"),
+    const finderOptions = {
+      className: (name: string) =>
+        matchClassNames.some((item) => name.includes(item)),
+      tagName: (name: string) =>
+        matchClassNames.some((item) => name.includes(item)),
+      attr: (name: string, _value: any) => name.includes("data-cy"),
+      idName: (name: string) => !name.includes("cdk-"),
     };
 
     const selector =
-      e.target.hasAttribute && e.target.hasAttribute(this.dataAttribute)
-        ? formatDataSelector(e.target, this.dataAttribute)
+      e.target?.hasAttribute &&
+      e.target.hasAttribute(this.dataAttribute as string)
+        ? formatDataSelector(e.target, this.dataAttribute as any)
         : finder(e.target, {
-            ...baseOptions,
+            ...finderOptions,
             seedMinLength: 1,
             optimizedMinLength: 2,
           });
 
-    const msg = {
+    const msg: ContextMessage = {
       selector: selector,
       fullSelector: finder(e.target, {
-        ...baseOptions,
+        ...finderOptions,
         seedMinLength: 10,
         optimizedMinLength: 10,
       }),
@@ -201,8 +171,8 @@ class EventRecorder {
       tagName: e.target.tagName,
       targetType: e.target.type,
       action: e.type,
-      keyCode: e.keyCode ? e.keyCode : null,
-      href: e.target.href ? e.target.href : null,
+      keyCode: e.keyCode ?? e.keyCode,
+      href: e.target.href ?? e.target.href,
       coordinates: getCoordinates(e),
       targetObject: e.target,
       targetText: e.target.innerText,
@@ -220,19 +190,22 @@ class EventRecorder {
   }
 }
 
-function getCoordinates(evt) {
+function getCoordinates(evt: MouseEvent) {
   const eventsWithCoordinates = {
     mouseup: true,
     mousedown: true,
     mousemove: true,
     mouseover: true,
   };
-  return eventsWithCoordinates[evt.type]
-    ? { x: evt.clientX, y: evt.clientY }
-    : null;
+  return eventsWithCoordinates[evt.type as keyof typeof eventsWithCoordinates]
+    ? {
+        x: evt.clientX,
+        y: evt.clientY,
+      }
+    : undefined;
 }
 
-function formatDataSelector(element, attribute) {
+function formatDataSelector(element: Element, attribute: string) {
   return `[${attribute}=${element.getAttribute(attribute)}]`;
 }
 
