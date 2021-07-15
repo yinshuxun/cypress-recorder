@@ -1,6 +1,6 @@
 {
   "name": "cypress-recorder",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Chrome extension for recording browser interaction and generating Cypress scripts",
   "main": "index.js",
   "scripts": {
@@ -13,8 +13,7 @@
     "e2e-test": "jest __e2e-tests__ --runInBand --silent",
     "lint": "eslint --quiet -f codeframe src"
   },
-  "pre-commit": [
-  ],
+  "pre-commit": [],
   "repository": {
     "type": "git",
     "url": "https://github.com/oscartavarez/cypress-recorder"
@@ -26,12 +25,10 @@
   ],
   "author": "Tim Nolet",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/oscartavarez/cypress-recorder/issues"
-  },
-  "homepage": "https://github.com/oscartavarez/cypress-recorder#readme",
   "dependencies": {
     "@medv/finder": "^1.1.0",
+    "@types/chrome": "^0.0.145",
+    "@types/url-parse": "^1.4.3",
     "@websanova/url": "^2.6.3",
     "delegate": "^3.2.0",
     "ts-loader": "4.0.0",

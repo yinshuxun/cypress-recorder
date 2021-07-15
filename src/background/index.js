@@ -1,4 +1,4 @@
-import pptrActions from "../code-generator/pptr-actions";
+import PPTR_ACTIONS from "../code-generator/pptr-actions";
 
 class RecordingController {
   constructor() {
@@ -6,14 +6,12 @@ class RecordingController {
     this._boundedMessageHandler = null;
     this._boundedNavigationHandler = null;
     this._boundedWaitHandler = null;
-    this._boundedAjaxHander = null;
     this._badgeState = "";
     this._isPaused = false;
   }
 
   boot() {
     chrome.extension.onConnect.addListener((port) => {
-      console.log("12312312");
       port.onMessage.addListener((msg) => {
         chrome.extension.getBackgroundPage().console.log("boot msg", msg);
         if (msg.action && msg.action === "start") this.start();

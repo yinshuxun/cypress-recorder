@@ -1,4 +1,4 @@
-export default {
+export const DOM_EVENTS = {
   CLICK: "click",
   DBLCLICK: "dblclick",
   CHANGE: "change",
@@ -9,7 +9,6 @@ export default {
   UNLOAD: "unload",
   POPSTATE: "popstate",
 };
-
 // const events = [
 //    abort,
 //    afterprint,

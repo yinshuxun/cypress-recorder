@@ -1,125 +1,125 @@
-import webpack from 'webpack'
-import HtmlWebpackPlugin from 'html-webpack-plugin'
+import webpack from "webpack";
+import HtmlWebpackPlugin from "html-webpack-plugin";
 // import ChromeExtensionReloader from 'webpack-chrome-extension-reloader'
-import CopyPlugin from 'copy-webpack-plugin'
-import { VueLoaderPlugin } from 'vue-loader'
-import path from 'path'
+import CopyPlugin from "copy-webpack-plugin";
+import { VueLoaderPlugin } from "vue-loader";
+import path from "path";
 
-const { NODE_ENV = 'development' } = process.env
+const { NODE_ENV = "development" } = process.env;
 
 const base = {
   context: __dirname,
   entry: {
-    background: './src/background/index.js',
-    'content-script': './src/content-scripts/index.js',
-    popup: './src/popup/index.js',
-    options: './src/options/index.js'
+    background: "./src/background/index.js",
+    "content-script": "./src/content-scripts/index.ts",
+    popup: "./src/popup/index.js",
+    options: "./src/options/index.js",
   },
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: [".ts", ".js"],
     alias: {
-      styles: path.resolve(__dirname, './src/styles/')
-    }
+      styles: path.resolve(__dirname, "./src/styles/"),
+    },
   },
   output: {
-    path: path.join(__dirname, 'build'),
-    filename: '[name].js'
+    path: path.join(__dirname, "build"),
+    filename: "[name].js",
   },
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        loader: 'babel-loader'
+        loader: "babel-loader",
       },
       {
         test: /\.ts$/,
         exclude: /node_modules/,
-        loader: 'ts-loader'
+        loader: "ts-loader",
       },
       {
         test: /\.vue$/,
-        loader: 'vue-loader'
+        loader: "vue-loader",
       },
       {
         test: /\.css$/,
-        use: [
-          'vue-style-loader',
-          'css-loader'
-        ]
+        use: ["vue-style-loader", "css-loader"],
       },
       {
         test: /\.scss$/,
         use: [
           {
-            loader: 'style-loader' // creates style nodes from JS strings
+            loader: "style-loader", // creates style nodes from JS strings
           },
           {
-            loader: 'css-loader' // translates CSS into CommonJS
+            loader: "css-loader", // translates CSS into CommonJS
           },
           {
-            loader: 'sass-loader' // compiles Sass to CSS
-          }
-        ]
-      }
-    ]
+            loader: "sass-loader", // compiles Sass to CSS
+          },
+        ],
+      },
+    ],
   },
   plugins: [
     new CopyPlugin([
-      { from: './src/manifest.json', to: './manifest.json' },
-      { from: './src/images', to: 'images' }
+      { from: "./src/manifest.json", to: "./manifest.json" },
+      { from: "./src/images", to: "images" },
     ]),
     new HtmlWebpackPlugin({
-      template: './src/popup/template.html',
-      chunks: ['popup']}),
+      template: "./src/popup/template.html",
+      chunks: ["popup"],
+    }),
     new HtmlWebpackPlugin({
-      template: './src/options/template.html',
-      chunks: ['options'],
-      filename: 'options.html'
-
+      template: "./src/options/template.html",
+      chunks: ["options"],
+      filename: "options.html",
     }),
     new VueLoaderPlugin(),
     new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: JSON.stringify(NODE_ENV)
-      }
-    })
-  ]
-}
+      "process.env": {
+        NODE_ENV: JSON.stringify(NODE_ENV),
+      },
+    }),
+  ],
+};
 
 const development = {
   ...base,
-  mode: 'development',
-  devtool: '#eval-module-source-map',
+  mode: "development",
+  devtool: "#eval-module-source-map",
   module: {
-    ...base.module
+    ...base.module,
   },
-  plugins: [
-    ...base.plugins,
-    new webpack.HotModuleReplacementPlugin()
-  ]
-}
+  plugins: [...base.plugins, new webpack.HotModuleReplacementPlugin()],
+  watchOptions: {
+    aggregateTimeout: 200,
+    poll: 1000,
+    ignored: [/release/, /build/, /node_modules/],
+  },
+  watch: true,
+};
 
 const production = {
   ...base,
   output: {
-    path: path.join(__dirname, 'dist'),
-    filename: '[name].js'
+    path: path.join(__dirname, "dist"),
+    filename: "[name].js",
   },
-  mode: 'production',
-  devtool: '#source-map',
+  mode: "production",
+  devtool: "#source-map",
 
   plugins: [
     ...base.plugins,
     new webpack.LoaderOptionsPlugin({
       minimize: true,
-      debug: false
-    })
-  ]
-}
+      debug: false,
+    }),
+  ],
+};
 
-if (NODE_ENV === 'development') {
-  module.exports = development
+if (NODE_ENV === "development") {
+  module.exports = development;
 } else {
-  module.exports = production
+  module.exports = production;
 }
